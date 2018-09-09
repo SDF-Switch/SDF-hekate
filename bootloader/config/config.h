@@ -26,6 +26,9 @@ typedef struct _hekate_config
 	u32 bootwait;
 	u32 customlogo;
 	u32 verification;
+	char* hbTitleId;
+	char* hbTitleName;
+	char* hbKeyCombo;
 	// Global temporary config.
 	int se_keygen_done;
 	u32 sbar_time_keeping;

@@ -43,6 +43,9 @@ void set_default_configuration()
 	h_cfg.bootwait = 3;
 	h_cfg.customlogo = 0;
 	h_cfg.verification = 2;
+	h_cfg.hbTitleId = NULL;
+	h_cfg.hbTitleName = NULL;
+	h_cfg.hbKeyCombo = NULL;
 	h_cfg.se_keygen_done = 0;
 	h_cfg.sbar_time_keeping = 0;
 }
@@ -77,6 +80,21 @@ int create_config_entry()
 		f_puts("\nverification=", &fp);
 		itoa(h_cfg.verification, lbuf, 10);
 		f_puts(lbuf, &fp);
+		if (h_cfg.hbTitleId != NULL)
+		{
+			f_puts("\nhbTitleId=", &fp);
+			f_puts(h_cfg.hbTitleId, &fp);
+		}
+		if (h_cfg.hbTitleName != NULL)
+		{
+			f_puts("\nhbTitleName=", &fp);
+			f_puts(h_cfg.hbTitleName, &fp);
+		}
+		if (h_cfg.hbKeyCombo != NULL)
+		{
+			f_puts("\nhbKeyCombo=", &fp);
+			f_puts(h_cfg.hbKeyCombo, &fp);
+		}
 		f_puts("\n", &fp);
 
 		// Re-construct existing entries.

@@ -2083,6 +2083,10 @@ void launch_firmware()
 	gfx_clear_grey(&gfx_ctxt, 0x1B);
 	gfx_con_setpos(&gfx_con, 0, 0);
 
+	static char dynamic_text_buf[128];
+	u32 dynamic_text_idx = 0;
+	dynamic_text_buf[dynamic_text_idx] = 0;
+
 	if (sd_mount())
 	{
 		if (ini_parse(&ini_sections, "bootloader/hekate_ipl.ini", false))
@@ -2112,7 +2116,78 @@ void launch_firmware()
 				ments[i].caption = ini_sec->name;
 				ments[i].data = ini_sec;
 				if (ini_sec->type == MENT_CAPTION)
+				{
 					ments[i].color = ini_sec->color;
+					if (strcmp(ments[i].caption, "%HOMEBREW_LAUNCH_BUTTONS_NOTICE%") == 0)
+					{
+						ments[i].caption = "You can enter the homebrew menu";
+						i++;
+						if (i > max_entries)
+							break;
+
+						ments[i].type = ini_sec->type;
+						ments[i].data = ini_sec;
+						ments[i].color = ini_sec->color;
+						ments[i].caption = &dynamic_text_buf[dynamic_text_idx];
+
+						u32 invertKeyCombo = 0;
+						const char* keyComboStr = h_cfg.hbKeyCombo;
+						if (keyComboStr != NULL && keyComboStr[0] == '!')
+						{
+							invertKeyCombo = 1;
+							keyComboStr++;
+						}
+						else if (keyComboStr == NULL)
+							keyComboStr = "";
+						if (*keyComboStr == 0)
+						{
+							static const char BY_LAUNCHING_TEXT[] = "by launching ";
+							memcpy(&dynamic_text_buf[dynamic_text_idx], BY_LAUNCHING_TEXT, sizeof(BY_LAUNCHING_TEXT));
+							dynamic_text_idx += sizeof(BY_LAUNCHING_TEXT)-1;
+							if (h_cfg.hbTitleName != NULL)
+							{
+								u32 titleLen = strlen(h_cfg.hbTitleName);
+								memcpy(&dynamic_text_buf[dynamic_text_idx], h_cfg.hbTitleName, titleLen+1);
+								dynamic_text_idx += titleLen;								
+							}
+							else
+							{
+								static const char ALBUM_TEXT[] = "Album";
+								memcpy(&dynamic_text_buf[dynamic_text_idx], ALBUM_TEXT, sizeof(ALBUM_TEXT));
+								dynamic_text_idx += sizeof(ALBUM_TEXT)-1;
+							}
+						}
+						else
+						{
+							static const char BY_TEXT[] = "by ";
+							memcpy(&dynamic_text_buf[dynamic_text_idx], BY_TEXT, sizeof(BY_TEXT));
+							dynamic_text_idx += sizeof(BY_TEXT)-1;
+							if (invertKeyCombo)
+							{
+								static const char NOT_TEXT[] = "NOT ";
+								memcpy(&dynamic_text_buf[dynamic_text_idx], NOT_TEXT, sizeof(NOT_TEXT));
+								dynamic_text_idx += sizeof(NOT_TEXT)-1;
+							}
+							static const char HOLDING_TEXT[] = "holding ";
+							memcpy(&dynamic_text_buf[dynamic_text_idx], HOLDING_TEXT, sizeof(HOLDING_TEXT));
+							dynamic_text_idx += sizeof(HOLDING_TEXT)-1;
+							{
+								u32 btnLen = strlen(keyComboStr);
+								memcpy(&dynamic_text_buf[dynamic_text_idx], keyComboStr, btnLen+1);
+								dynamic_text_idx += btnLen;										
+							}
+							static const char WHILE_LAUNCHING_TEXT[] = " while launching ";
+							memcpy(&dynamic_text_buf[dynamic_text_idx], WHILE_LAUNCHING_TEXT, sizeof(WHILE_LAUNCHING_TEXT));
+							dynamic_text_idx += sizeof(WHILE_LAUNCHING_TEXT)-1;
+							if (h_cfg.hbTitleName != NULL)
+							{
+								u32 titleLen = strlen(h_cfg.hbTitleName);
+								memcpy(&dynamic_text_buf[dynamic_text_idx], h_cfg.hbTitleName, titleLen+1);
+								dynamic_text_idx += titleLen;
+							}
+						}
+					}
+				}
 				i++;
 
 				if ((i - 4) > max_entries)
@@ -2237,6 +2312,28 @@ void auto_launch_firmware()
 								h_cfg.customlogo = atoi(kv->val);
 							else if (!strcmp("verification", kv->key))
 								h_cfg.verification = atoi(kv->val);
+							else if (!strcmp("hbTitleId", kv->key))
+							{
+								if (h_cfg.hbTitleId != NULL)
+									free(h_cfg.hbTitleId);
+								h_cfg.hbTitleId = malloc(strlen(kv->val)+1);
+								memcpy(h_cfg.hbTitleId, kv->val, strlen(kv->val)+1);
+							}
+							else if (!strcmp("hbTitleName", kv->key))
+							{
+								if (h_cfg.hbTitleName != NULL)
+									free(h_cfg.hbTitleName);
+								h_cfg.hbTitleName = malloc(strlen(kv->val)+1);
+								memcpy(h_cfg.hbTitleName, kv->val, strlen(kv->val)+1);
+							}
+							else if (!strcmp("hbKeyCombo", kv->key))
+							{
+								if (h_cfg.hbKeyCombo != NULL)
+									free(h_cfg.hbKeyCombo);
+								h_cfg.hbKeyCombo = malloc(strlen(kv->val)+1);
+								memcpy(h_cfg.hbKeyCombo, kv->val, strlen(kv->val)+1);
+							}
+							
 						}
 						boot_entry_id++;
 						continue;
